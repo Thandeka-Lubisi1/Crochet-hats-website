@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crochet Hat Order</title>
+    <link rel="stylesheet" href="styles.css">
+    <script defer src="app.js"></script>
+</head>
+<body>
+    <!-- Login Page -->
+    <div id="loginPage" class="page">
+        <div class="login-container">
+            <img src="pictures/pic.png" alt="Login Image" class="login-image">
+            <h2>Login</h2>
+            <input type="text" id="username" placeholder="Enter Username">
+            <input type="password" id="password" placeholder="Enter Password">
+            <button onclick="login()">Login</button>
+            <p>Don't have an account? <a href="javascript:void(0);" onclick="showRegister()">Register here</a></p>
+        </div>
+    </div>
+
+    <!-- Registration Page -->
+    <div id="registerPage" class="page" style="display: none;">
+        <div class="login-container">
+            <h2>Register</h2>
+            <input type="text" id="newUsername" placeholder="Enter Username">
+            <input type="password" id="newPassword" placeholder="Enter Password">
+            <button onclick="register()">Register</button>
+            <p>Already have an account? <a href="javascript:void(0);" onclick="showLogin()">Login here</a></p>
+        </div>
+    </div>
+
+    <!-- Order Page (Initially Hidden) -->
+    <div id="orderPage" class="page" style="display: none;">
+        <h1>Select Your Crochet Hat</h1>
+        <div class="gallery">
+            <img src="pictures/pic1.jpg" onclick="selectHat('pic1')">
+            <img src="pictures/pic2.jpg" onclick="selectHat('pic2')">
+            <img src="pictures/pic3.avif" onclick="selectHat('pic3')">
+            <img src="pictures/pic4.jpg" onclick="selectHat('pic4')">
+            <img src="pictures/pic5.jpg" onclick="selectHat('pic5')">
+            <img src="pictures/pic6.jpg" onclick="selectHat('pic6')">
+            <img src="pictures/pic7.jpeg" onclick="selectHat('pic7')">
+            <img src="pictures/pic8.jpg" onclick="selectHat('pic8')">
+            <img src="pictures/pic9.avif" onclick="selectHat('pic9')">
+        </div>
+
+        <form id="orderForm">
+            <label for="hatColor">Choose Hat Color:</label>
+            <select id="hatColor" required>
+                <option value="red">Red</option>
+                <option value="blue">Blue</option>
+                <option value="green">Green</option>
+                <option value="yellow">Yellow</option>
+                <option value="purple">Purple</option>
+                <option value="orange">Orange</option>
+                <option value="pink">Pink</option>
+                <option value="brown">Brown</option>
+                <option value="black">Black</option>
+                <option value="white">White</option>
+                <option value="gray">Gray</option>
+                <option value="beige">Beige</option>
+                <option value="lightblue">Light Blue</option>
+                <option value="lime">Lime</option>
+                <option value="turquoise">Turquoise</option>
+                <option value="navy">Navy</option>
+                <option value="teal">Teal</option>
+                <option value="peach">Peach</option>
+                <option value="mint">Mint</option>
+                <option value="burgundy">Burgundy</option>
+            </select>
+
+            <label for="deliveryMethod">Choose Delivery Method:</label>
+            <select id="deliveryMethod" onchange="updateDeliveryFee()" required>
+                <option value="pickup">Pick Up</option>
+                <option value="delivery">Delivery</option>
+            </select>
+
+            <div id="pepStore" style="display:none;">
+                <label for="pepStoreName">Enter Nearest Pep Store:</label>
+                <input type="text" id="pepStoreName" placeholder="Enter Pep Store Name" />
+            </div>
+
+            <div id="paymentMethodDiv">
+                <label for="paymentMethod">Choose Payment Method:</label>
+                <select id="paymentMethod" onchange="togglePaymentForm()" required>
+                    <option value="cash">Cash on Delivery</option>
+                    <option value="online">Online Payment</option>
+                </select>
+
+                <div id="cardDetails" style="display:none;">
+                    <label for="cardNumber">Card Number:</label>
+                    <input type="text" id="cardNumber" placeholder="Enter Card Number" />
+
+                    <label for="cvv">CVV:</label>
+                    <input type="text" id="cvv" placeholder="Enter CVV" />
+
+                    <label for="expiryDate">Expiry Date:</label>
+                    <input type="month" id="expiryDate" />
+                </div>
+            </div>
+
+            <p id="address">Your Address: <span id="userAddress"></span></p>
+
+            <button type="submit">Place Order</button>
+        </form>
+
+        <p id="deliveryFee"></p>
+    </div>
+
+    <!-- Order Confirmation -->
+    <div id="confirmationPage" class="page" style="display: none;">
+        <h2>Order Confirmation</h2>
+        <p id="orderDetails"></p>
+        <button onclick="restart()">Place Another Order</button>
+    </div>
+</body>
+</html>
