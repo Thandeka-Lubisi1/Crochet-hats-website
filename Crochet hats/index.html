@@ -5,7 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Crochet Hat Order</title>
     <link rel="stylesheet" href="styles.css">
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <!-- Your Firebase config goes here -->
+    <script>
+      // TODO: Replace with your Firebase project config
+      const firebaseConfig = {
+        apiKey: "YOUR_API_KEY",
+        authDomain: "YOUR_AUTH_DOMAIN",
+        databaseURL: "YOUR_DATABASE_URL",
+        projectId: "YOUR_PROJECT_ID",
+        storageBucket: "YOUR_STORAGE_BUCKET",
+        messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+        appId: "YOUR_APP_ID"
+      };
+      firebase.initializeApp(firebaseConfig);
+    </script>
     <script defer src="app.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
     <!-- Login Page -->
@@ -16,7 +35,8 @@
             <input type="text" id="username" placeholder="Enter Username">
             <input type="password" id="password" placeholder="Enter Password">
             <button onclick="login()">Login</button>
-            <p>Don't have an account? <a href="javascript:void(0);" onclick="showRegister()">Register here</a></p>
+            <p>Don't have an account? <a href="javascript:void(0);" onclick="showRegister()">Register here</a> | <a href="javascript:void(0);" onclick="forgotPassword()">Forgot Password?</a> | <a href="javascript:void(0);" onclick="forgotUsername()">Forgot Username?</a></p>
+            <p><a href="javascript:void(0);" onclick="showAdminLogin()">Admin Login</a></p>
         </div>
     </div>
 
@@ -25,10 +45,44 @@
         <div class="login-container">
             <h2>Register</h2>
             <input type="text" id="newUsername" placeholder="Enter Username">
+            <input type="email" id="newEmail" placeholder="Enter Email">
             <input type="password" id="newPassword" placeholder="Enter Password">
             <button onclick="register()">Register</button>
             <p>Already have an account? <a href="javascript:void(0);" onclick="showLogin()">Login here</a></p>
         </div>
+    </div>
+
+    <!-- Admin Login Page -->
+    <div id="adminLoginPage" class="page" style="display: none;">
+        <div class="login-container">
+            <h2>Admin Login</h2>
+            <input type="text" id="adminUsername" placeholder="Enter Admin Username">
+            <input type="password" id="adminPassword" placeholder="Enter Admin Password">
+            <button onclick="adminLogin()">Login as Admin</button>
+            <p><a href="javascript:void(0);" onclick="showLogin()">Back to User Login</a></p>
+        </div>
+    </div>
+
+    <!-- Admin Orders Page -->
+    <div id="adminOrdersPage" class="page" style="display: none;">
+        <h2>All Orders</h2>
+        <table id="ordersTable" border="1" style="width:100%;text-align:left;">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Hat Color</th>
+                    <th>Quantity</th>
+                    <th>Hat Model</th>
+                    <th>Delivery Method</th>
+                    <th>Delivery Info</th>
+                    <th>Payment Method</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Orders will be inserted here -->
+            </tbody>
+        </table>
+        <button onclick="logoutAdmin()">Logout</button>
     </div>
 
     <!-- Order Page (Initially Hidden) -->
@@ -47,6 +101,9 @@
         </div>
 
         <form id="orderForm">
+            <label for="customerName">Your Name:</label>
+            <input type="text" id="customerName" placeholder="Enter your name" required />
+
             <label for="hatColor">Choose Hat Color:</label>
             <select id="hatColor" required>
                 <option value="red">Red</option>
@@ -70,6 +127,9 @@
                 <option value="mint">Mint</option>
                 <option value="burgundy">Burgundy</option>
             </select>
+
+            <label for="hatQuantity">Quantity:</label>
+            <input type="number" id="hatQuantity" min="1" value="1" required />
 
             <label for="deliveryMethod">Choose Delivery Method:</label>
             <select id="deliveryMethod" onchange="updateDeliveryFee()" required>
@@ -113,6 +173,7 @@
     <div id="confirmationPage" class="page" style="display: none;">
         <h2>Order Confirmation</h2>
         <p id="orderDetails"></p>
+        <button onclick="downloadReceiptPDF()">Download Receipt as PDF</button>
         <button onclick="restart()">Place Another Order</button>
     </div>
 </body>
