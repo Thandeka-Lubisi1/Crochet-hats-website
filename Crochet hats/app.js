@@ -2,42 +2,43 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("orderForm").addEventListener("submit", placeOrder);
 });
 
-// Store user credentials in memory for simplicity (in a real app, this should be done in a database)
-let users = {};
+// Remove in-memory users and orders
 let userAddress = "123 Main St, Roodepoort";  // For illustration
 let resetCodes = {};
-let orders = [];
 const ADMIN_CREDENTIALS = { username: 'admin', password: 'admin123' };
 
+// Firebase references
+const db = firebase.database();
+const auth = firebase.auth();
+
 function register() {
-    let newUsername = document.getElementById("newUsername").value;
     let newEmail = document.getElementById("newEmail").value;
     let newPassword = document.getElementById("newPassword").value;
-    
     // Password validation with regular expression
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
     // Email validation regex
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-    if (!newUsername || !newEmail || !newPassword) {
+    if (!newEmail || !newPassword) {
         alert("Please fill in all fields.");
         return;
     }
-
     if (!emailRegex.test(newEmail)) {
         alert("Please enter a valid email address.");
         return;
     }
-
     if (!passwordRegex.test(newPassword)) {
         alert("Password must be at least 8 characters long, include at least one uppercase letter, one lowercase letter, one number, and one special character.");
         return;
     }
-
-    users[newUsername] = { password: newPassword, email: newEmail };
-    alert("Registration successful! Please log in.");
-    document.getElementById("registerPage").style.display = "none";
-    document.getElementById("loginPage").style.display = "block";
+    auth.createUserWithEmailAndPassword(newEmail, newPassword)
+        .then(() => {
+            alert("Registration successful! Please log in.");
+            document.getElementById("registerPage").style.display = "none";
+            document.getElementById("loginPage").style.display = "block";
+        })
+        .catch(error => {
+            alert(error.message);
+        });
 }
 
 function showRegister() {
@@ -51,69 +52,33 @@ function showLogin() {
 }
 
 function login() {
-    let username = document.getElementById("username").value;
+    let email = document.getElementById("username").value;
     let password = document.getElementById("password").value;
-    
-    if (users[username] && users[username].password === password) {
-        document.getElementById("loginPage").style.display = "none";
-        document.getElementById("orderPage").style.display = "block";
-        document.getElementById("userAddress").innerText = userAddress;  // Display user address
-    } else {
-        alert("Invalid username or password. Please register if you don't have an account.");
-    }
+    auth.signInWithEmailAndPassword(email, password)
+        .then(() => {
+            document.getElementById("loginPage").style.display = "none";
+            document.getElementById("orderPage").style.display = "block";
+            document.getElementById("userAddress").innerText = userAddress;
+        })
+        .catch(error => {
+            alert("Invalid email or password. Please register if you don't have an account.");
+        });
 }
 
 function forgotPassword() {
     const email = prompt("Enter your registered email to reset your password:");
     if (!email) return;
-    // Find user by email
-    let foundUser = null;
-    for (const username in users) {
-        if (users[username].email === email) {
-            foundUser = username;
-            break;
-        }
-    }
-    if (foundUser) {
-        // Generate a 6-digit code
-        const code = Math.floor(100000 + Math.random() * 900000).toString();
-        resetCodes[email] = { code, username: foundUser };
-        alert(`A reset code has been sent to your email: ${email}\n(For demo, your code is: ${code})`);
-        // Prompt for code and new password
-        const enteredCode = prompt("Enter the reset code sent to your email:");
-        if (enteredCode === code) {
-            const newPassword = prompt("Enter your new password:");
-            // Password validation
-            const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
-            if (!passwordRegex.test(newPassword)) {
-                alert("Password must be at least 8 characters long, include at least one uppercase letter, one lowercase letter, one number, and one special character.");
-                return;
-            }
-            users[foundUser].password = newPassword;
-            alert("Password reset successful! You can now log in with your new password.");
-        } else {
-            alert("Incorrect code. Please try again.");
-        }
-    } else {
-        alert("Email not found. Please register or try again.");
-    }
+    auth.sendPasswordResetEmail(email)
+        .then(() => {
+            alert("A password reset email has been sent to: " + email);
+        })
+        .catch(error => {
+            alert("Email not found or error sending reset email.");
+        });
 }
 
 function forgotUsername() {
-    const email = prompt("Enter your registered email to retrieve your username:");
-    if (!email) return;
-    let foundUser = null;
-    for (const username in users) {
-        if (users[username].email === email) {
-            foundUser = username;
-            break;
-        }
-    }
-    if (foundUser) {
-        alert(`Your username is: ${foundUser}`);
-    } else {
-        alert("Email not found. Please register or try again.");
-    }
+    alert("Forgot Username is not supported with email/password login. Please use your email to log in.");
 }
 
 function updateDeliveryFee() {
@@ -155,7 +120,13 @@ function adminLogin() {
 function showAdminOrders() {
     hideAllPages();
     document.getElementById('adminOrdersPage').style.display = 'block';
-    renderOrdersTable();
+    db.ref('orders').once('value', snapshot => {
+        const orders = [];
+        snapshot.forEach(child => {
+            orders.push(child.val());
+        });
+        renderOrdersTable(orders);
+    });
 }
 
 function logoutAdmin() {
@@ -163,7 +134,7 @@ function logoutAdmin() {
     document.getElementById('loginPage').style.display = 'block';
 }
 
-function renderOrdersTable() {
+function renderOrdersTable(orders) {
     const tbody = document.getElementById('ordersTable').querySelector('tbody');
     tbody.innerHTML = '';
     orders.forEach(order => {
@@ -185,7 +156,7 @@ function hideAllPages() {
     document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
 }
 
-// Update placeOrder to save order
+// Update placeOrder to save order in Firebase
 function placeOrder(event) {
     event.preventDefault();
     let customerName = document.getElementById("customerName").value;
@@ -196,16 +167,14 @@ function placeOrder(event) {
     let pepStore = document.getElementById("pepStoreName").value;
     let selectedHat = localStorage.getItem("selectedHat");
     let address = userAddress;
-
     let deliveryInfo = '';
     if (deliveryMethod === "delivery" && pepStore) {
         deliveryInfo = `Pep Store: ${pepStore}`;
     } else if (deliveryMethod === "pickup") {
         deliveryInfo = `Pick Up at: ${address}`;
     }
-
-    // Save order
-    orders.push({
+    // Save order to Firebase
+    db.ref('orders').push({
         customerName,
         hatColor,
         hatQuantity,
@@ -214,7 +183,6 @@ function placeOrder(event) {
         deliveryInfo,
         paymentMethod
     });
-
     let receipt = `--- Order Receipt ---\n`;
     receipt += `Name: ${customerName}\n`;
     receipt += `Hat Color: ${hatColor}\n`;
@@ -230,7 +198,6 @@ function placeOrder(event) {
     }
     receipt += `Payment Method: ${paymentMethod}\n`;
     receipt += `---------------------`;
-
     document.getElementById("orderDetails").innerText = receipt;
     document.getElementById("orderPage").style.display = "none";
     document.getElementById("confirmationPage").style.display = "block";
